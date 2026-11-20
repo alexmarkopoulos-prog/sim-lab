@@ -1,0 +1,27 @@
+# Example Fly.io config. Rename the app, then: fly launch --no-deploy && fly volumes create simlab_data --size 1 && fly deploy
+app = "sim-lab"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    path = "/api/health"
+    interval = "30s"
+    timeout = "5s"
+
+[[mounts]]
+  source = "simlab_data"
+  destination = "/data"
+
+[env]
+  SIMLAB_DATABASE_URL = "sqlite:////data/simlab.db"
+  SIMLAB_DEV_EXPOSE_MAGIC_LINK = "false"
+  SIMLAB_COOKIE_SECURE = "true"

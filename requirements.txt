@@ -1,0 +1,11 @@
+# pydfs-lineup-optimizer 3.6.1 is the last release (about 20 months old).
+# It pins PuLP==2.4. Do not float either package: newer PuLP breaks this API.
+pydfs-lineup-optimizer==3.6.1
+nflreadpy==0.1.5
+numpy==2.5.5
+fastapi==0.115.6
+uvicorn==0.34.0
+sqlalchemy==2.0.36
+python-multipart==0.0.20
+httpx==0.28.1
+pytest==8.3.4

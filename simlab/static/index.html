@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sim Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/styles.css?v=2" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect fill='%23e2b340' x='1' y='3' width='3' height='10'/%3E%3Crect fill='%238eb6ff' x='6' y='6' width='3' height='7'/%3E%3Crect fill='%233ddc97' x='11' y='1' width='3' height='12'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <div id="login-view" class="auth">
+    <section class="auth-card">
+      <div class="brand">
+        <span class="mark" aria-hidden="true"></span>
+        <div>
+          <h1>Sim Lab</h1>
+          <p>DraftKings NFL lineups and correlated sims for one account.</p>
+        </div>
+      </div>
+      <form id="login-form">
+        <label>Email <input id="login-email" type="email" autocomplete="username" required /></label>
+        <label>Password <input id="login-password" type="password" autocomplete="current-password" /></label>
+        <button type="submit" class="primary">Sign in</button>
+      </form>
+      <form id="magic-form">
+        <label>Or email a magic link <input id="magic-email" type="email" autocomplete="username" required /></label>
+        <button type="submit" class="ghost">Send link</button>
+      </form>
+      <p id="auth-message" class="note"></p>
+      <p id="dev-link" class="dev-link" hidden></p>
+    </section>
+  </div>
+
+  <div id="app-view" hidden>
+    <header class="topbar">
+      <div class="brand compact">
+        <span class="mark" aria-hidden="true"></span>
+        <strong>Sim Lab</strong>
+      </div>
+      <label class="slate-pick">Slate
+        <select id="slate-select"></select>
+      </label>
+      <span id="format-pill" class="pill"></span>
+      <nav class="tabs">
+        <button type="button" data-tab="pool" class="tab active">Pool</button>
+        <button type="button" data-tab="builder" class="tab">Lineups</button>
+        <button type="button" data-tab="sims" class="tab">Sims</button>
+      </nav>
+      <div class="who">
+        <span id="who"></span>
+        <button type="button" id="logout" class="ghost">Log out</button>
+      </div>
+    </header>
+
+    <section id="upload-panel" class="panel upload-panel">
+      <form id="upload-form">
+        <label>DraftKings salary CSV <input id="salary-file" type="file" accept=".csv,text/csv" required /></label>
+        <label>Projections CSV <input id="proj-file" type="file" accept=".csv,text/csv" required /></label>
+        <button type="submit" class="primary">Import slate</button>
+      </form>
+      <button type="button" id="load-sample" class="ghost">Load IND@HOU sample</button>
+      <p class="hint">Projections use Name, Salary, Team, Opponent, Position, Points, Ownership, CPT Ownership. DK salary is the salary of record.</p>
+    </section>
+
+    <p id="slate-note" class="note banner" hidden></p>
+
+    <section id="tab-pool" class="tab-panel">
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="Search players" />
+        <div id="pos-filters" class="chips"></div>
+        <div id="team-filters" class="chips"></div>
+        <label class="check"><input id="hide-out" type="checkbox" /> Hide OUT</label>
+        <label class="check"><input id="hide-excluded" type="checkbox" /> Hide excluded</label>
+        <button type="button" id="enrich" class="ghost">Pull injuries and snaps</button>
+        <span id="pool-meta" class="meta"></span>
+      </div>
+      <div class="table-wrap">
+        <table id="pool-table">
+          <thead></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-builder" class="tab-panel" hidden>
+      <div class="builder">
+        <form id="rules-form" class="panel rules">
+          <h2>Rules</h2>
+          <div class="grid-2">
+            <label>Lineups <input name="n" type="number" min="1" max="40" value="4" /></label>
+            <label>Max shared <input name="max_shared" type="number" min="1" max="8" value="4" /></label>
+            <label>QB stack <input name="qb_stack" type="number" min="0" max="4" value="1" /></label>
+            <label>Bring-back <input name="bring_back" type="number" min="0" max="4" value="1" /></label>
+            <label>Min salary <input name="min_salary" type="number" min="0" max="50000" step="100" value="46000" /></label>
+            <label>Max salary <input name="max_salary" type="number" min="0" max="50000" step="100" value="50000" /></label>
+            <label>Min cum own % <input name="min_own" type="number" min="0" max="900" step="1" value="160" /></label>
+            <label>Max cum own % <input name="max_own" type="number" min="0" max="900" step="1" value="210" /></label>
+            <label class="showdown-only">Max per captain <input name="max_per_captain" type="number" min="1" max="20" value="2" /></label>
+          </div>
+          <label class="check"><input name="no_naked_pass_catchers" type="checkbox" checked /> No 2+ pass catchers from a team without its QB</label>
+          <div class="showdown-only">
+            <h3>Captain pool</h3>
+            <p class="hint">Leave empty to allow any captain. Checked names are the only legal CPTs.</p>
+            <div id="captain-pool" class="check-list"></div>
+          </div>
+          <h3>Only with</h3>
+          <div id="only-with"></div>
+          <button type="button" id="add-only-with" class="ghost">Add only-with rule</button>
+          <button type="submit" class="primary">Generate lineups</button>
+          <p id="rules-note" class="note"></p>
+        </form>
+        <div class="lineup-col">
+          <div class="toolbar">
+            <h2>Lineups</h2>
+            <a id="export-link" class="ghost button-link" href="#">Export DK CSV</a>
+          </div>
+          <div id="lineup-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-sims" class="tab-panel" hidden>
+      <div class="sim-layout">
+        <form id="sim-form" class="panel rules">
+          <h2>Contest</h2>
+          <p class="disclaimer">Model output for ranking. This is not real contest ROI, and Sim Lab never enters a contest.</p>
+          <div class="grid-2">
+            <label>Sims <input name="n_sims" type="number" min="1000" max="40000" step="1000" value="10000" /></label>
+            <label>Contest size <input name="contest_size" type="number" min="2" step="1" value="5000" /></label>
+            <label>Entry fee <input name="entry_fee" type="number" min="1" step="1" value="20" /></label>
+            <label>Max entries <input name="max_entries" type="number" min="1" value="4" /></label>
+            <label>Cash % <input name="cash_pct" type="number" min="1" max="100" step="1" value="20" /></label>
+            <label>Rake % <input name="rake" type="number" min="0" max="40" step="1" value="15" /></label>
+            <label>Extra completions <input name="extra_lineups" type="number" min="0" max="40" value="12" /></label>
+            <label>Sim pool size <input name="pool_limit" type="number" min="8" max="24" value="18" /></label>
+          </div>
+          <label>Custom payouts <textarea name="payout_text" rows="4" placeholder="1-1:10000&#10;2-10:500&#10;Leave blank for a top-heavy curve"></textarea></label>
+          <p class="hint">Blank payouts use a top-heavy curve: about 35% of the net pool to the top 0.1%, 25% to the rest of the top 1%, and the rest across the cash line. Dupes are exact lineup matches in the optimizer field, not an ownership product.</p>
+          <button type="submit" class="primary" id="run-sim">Run sims</button>
+          <button type="button" class="ghost" id="cancel-sim" hidden>Cancel</button>
+          <div id="sim-progress" class="progress" hidden><span id="sim-bar"></span></div>
+          <p id="sim-message" class="note"></p>
+        </form>
+        <div class="sim-results">
+          <div id="sim-summary"></div>
+          <h2>Lineups by sim ROI and top 0.1%</h2>
+          <div class="table-wrap">
+            <table id="result-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <h2>Captain scripts</h2>
+          <div id="scripts"></div>
+          <h2>Optimal rate vs ownership</h2>
+          <div class="table-wrap">
+            <table id="lev-table">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+  <div id="toast" class="toast" hidden></div>
+  <script src="/static/app.js?v=2"></script>
+</body>
+</html>

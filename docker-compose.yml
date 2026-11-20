@@ -1,0 +1,14 @@
+services:
+  simlab:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      SIMLAB_DATABASE_URL: sqlite:////data/simlab.db
+      SIMLAB_COOKIE_SECURE: "false"
+    volumes:
+      - simlab-data:/data
+
+volumes:
+  simlab-data:

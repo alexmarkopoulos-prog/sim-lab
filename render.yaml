@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: sim-lab
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: SIMLAB_SECRET_KEY
+        generateValue: true
+      - key: SIMLAB_EMAIL
+        sync: false
+      - key: SIMLAB_PASSWORD
+        sync: false
+      - key: SIMLAB_DATABASE_URL
+        value: sqlite:////data/simlab.db
+      - key: SIMLAB_BASE_URL
+        sync: false
+      - key: SIMLAB_DEV_EXPOSE_MAGIC_LINK
+        value: "false"
+      - key: SIMLAB_COOKIE_SECURE
+        value: "true"
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+    disk:
+      name: simlab-data
+      mountPath: /data
+      sizeGB: 1
